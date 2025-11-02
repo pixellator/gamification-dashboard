@@ -114,6 +114,8 @@ export class ProjectManager {
 
         const project: any = {
             sourceDocuments: [],
+            promptingDocuments: [],
+            gameSpecifications: [],
             gameImplementations: [],
             gameTraces: [],
             evaluationTools: [],
@@ -135,6 +137,16 @@ export class ProjectManager {
                 case 'source_documents':
                     if (line.startsWith('- ')) {
                         project.sourceDocuments.push(line.slice(2));
+                    }
+                    break;
+                case 'prompting_documents':
+                    if (line.startsWith('- ')) {
+                        project.promptingDocuments.push(line.slice(2));
+                    }
+                    break;
+                case 'game_specifications':
+                    if (line.startsWith('- ')) {
+                        project.gameSpecifications.push(line.slice(2));
                     }
                     break;
                 case 'game_implementations':
@@ -170,10 +182,16 @@ export class ProjectManager {
                                 project.version = cleanValue;
                                 break;
                             case 'promptingdocument':
-                                project.promptingDocument = cleanValue;
+                                // Backward compatibility: migrate singular to array
+                                if (cleanValue) {
+                                    project.promptingDocuments.push(cleanValue);
+                                }
                                 break;
                             case 'gamespecification':
-                                project.gameSpecification = cleanValue;
+                                // Backward compatibility: migrate singular to array
+                                if (cleanValue) {
+                                    project.gameSpecifications.push(cleanValue);
+                                }
                                 break;
                             case 'currentphase':
                                 if (ProjectModelValidator.isValidWorkflowPhase(cleanValue)) {
@@ -209,14 +227,20 @@ export class ProjectManager {
         }
         content += '\n';
 
-        if (project.promptingDocument) {
-            content += '[PROMPTING_DOCUMENT]\n';
-            content += `${project.promptingDocument}\n\n`;
+        if (project.promptingDocuments.length > 0) {
+            content += '[PROMPTING_DOCUMENTS]\n';
+            for (const doc of project.promptingDocuments) {
+                content += `- ${doc}\n`;
+            }
+            content += '\n';
         }
 
-        if (project.gameSpecification) {
-            content += '[GAME_SPECIFICATION]\n';
-            content += `${project.gameSpecification}\n\n`;
+        if (project.gameSpecifications.length > 0) {
+            content += '[GAME_SPECIFICATIONS]\n';
+            for (const spec of project.gameSpecifications) {
+                content += `- ${spec}\n`;
+            }
+            content += '\n';
         }
 
         if (project.gameImplementations.length > 0) {

@@ -32,30 +32,30 @@ export class FileSelector {
         return files ? files.map(file => file.fsPath) : [];
     }
 
-    static async selectPromptingDocument(): Promise<string | undefined> {
+    static async selectPromptingDocuments(): Promise<string[]> {
         const guidelinesPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('guidelinesRepository');
-        
+
         let defaultUri: vscode.Uri | undefined;
         if (guidelinesPath && fs.existsSync(guidelinesPath)) {
             defaultUri = vscode.Uri.file(guidelinesPath);
         }
 
-        const file = await vscode.window.showOpenDialog({
+        const files = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
-            canSelectMany: false,
+            canSelectMany: true,
             defaultUri,
             filters: {
                 'Text Files': ['txt', 'md'],
                 'All Files': ['*']
             },
-            openLabel: 'Select Prompting Document'
+            openLabel: 'Select Prompting Documents'
         });
 
-        return file ? file[0].fsPath : undefined;
+        return files ? files.map(file => file.fsPath) : [];
     }
 
-    static async selectGameSpecification(): Promise<string | undefined> {
+    static async selectGameSpecifications(): Promise<string[]> {
         const defaultPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('gameSpecificationsDirectory');
 
         let defaultUri: vscode.Uri | undefined;
@@ -63,19 +63,19 @@ export class FileSelector {
             defaultUri = vscode.Uri.file(defaultPath);
         }
 
-        const file = await vscode.window.showOpenDialog({
+        const files = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
-            canSelectMany: false,
+            canSelectMany: true,
             defaultUri,
             filters: {
                 'Python Files': ['py'],
                 'All Files': ['*']
             },
-            openLabel: 'Select Game Specification'
+            openLabel: 'Select Game Specifications'
         });
 
-        return file ? file[0].fsPath : undefined;
+        return files ? files.map(file => file.fsPath) : [];
     }
 
     static async selectGameImplementations(): Promise<string[]> {

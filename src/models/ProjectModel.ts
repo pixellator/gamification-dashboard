@@ -21,8 +21,8 @@ export interface GamificationProject {
     name: string;
     version: string;
     sourceDocuments: string[];
-    promptingDocument?: string;
-    gameSpecification?: string;
+    promptingDocuments: string[];
+    gameSpecifications: string[];
     gameImplementations: string[];
     gameTraces: string[];
     evaluationTools: string[];
@@ -71,6 +71,8 @@ export class ProjectModelFactory {
             name: name,
             version: "1.0",
             sourceDocuments: [],
+            promptingDocuments: [],
+            gameSpecifications: [],
             gameImplementations: [],
             gameTraces: [],
             evaluationTools: [],

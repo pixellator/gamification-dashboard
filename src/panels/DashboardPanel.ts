@@ -309,23 +309,23 @@ export class DashboardPanel {
     }
 
     private async _handleSelectPromptingDocument() {
-        const file = await FileSelector.selectPromptingDocument();
-        if (file) {
-            this.projectManager.updateProject({ promptingDocument: file });
+        const files = await FileSelector.selectPromptingDocuments();
+        if (files.length > 0) {
+            this.projectManager.updateProject({ promptingDocuments: files });
             this.postMessage({
-                command: 'promptingDocumentSelected',
-                file: file
+                command: 'promptingDocumentsSelected',
+                files: files
             });
         }
     }
 
     private async _handleSelectGameSpecification() {
-        const file = await FileSelector.selectGameSpecification();
-        if (file) {
-            this.projectManager.updateProject({ gameSpecification: file });
+        const files = await FileSelector.selectGameSpecifications();
+        if (files.length > 0) {
+            this.projectManager.updateProject({ gameSpecifications: files });
             this.postMessage({
-                command: 'gameSpecificationSelected',
-                file: file
+                command: 'gameSpecificationsSelected',
+                files: files
             });
         }
     }
@@ -354,27 +354,27 @@ export class DashboardPanel {
 
     private async _handleGenerateSpecification() {
         const currentProject = this.projectManager.getCurrentProject();
-        if (!currentProject?.project.promptingDocument) {
-            vscode.window.showWarningMessage('No prompting document selected');
+        if (!currentProject?.project.promptingDocuments || currentProject.project.promptingDocuments.length === 0) {
+            vscode.window.showWarningMessage('No prompting documents selected');
             return;
         }
 
         // Placeholder for future implementation
         vscode.window.showInformationMessage(
-            'Generate Specification: This will use AI to generate a game specification from the prompting document. (Feature coming soon)'
+            `Generate Specification: This will use AI to generate a game specification from ${currentProject.project.promptingDocuments.length} prompting document(s). (Feature coming soon)`
         );
     }
 
     private async _handleImplementGame() {
         const currentProject = this.projectManager.getCurrentProject();
-        if (!currentProject?.project.gameSpecification) {
-            vscode.window.showWarningMessage('No game specification selected');
+        if (!currentProject?.project.gameSpecifications || currentProject.project.gameSpecifications.length === 0) {
+            vscode.window.showWarningMessage('No game specifications selected');
             return;
         }
 
         // Placeholder for future implementation
         vscode.window.showInformationMessage(
-            'Implement Game: This will use AI to implement the game based on the specification. (Feature coming soon)'
+            `Implement Game: This will use AI to implement the game based on ${currentProject.project.gameSpecifications.length} specification(s). (Feature coming soon)`
         );
     }
 
@@ -384,12 +384,33 @@ export class DashboardPanel {
 
     private async _handleLaunchTextSOLUZION() {
         const currentProject = this.projectManager.getCurrentProject();
-        if (!currentProject?.project.gameSpecification) {
-            vscode.window.showWarningMessage('No game specification selected');
+        if (!currentProject?.project.gameSpecifications || currentProject.project.gameSpecifications.length === 0) {
+            vscode.window.showWarningMessage('No game specifications selected');
             return;
         }
 
-        const result = await SOLUZIONLauncher.launchTextEngine(currentProject.project.gameSpecification);
+        // If multiple specs, let user choose which one to launch
+        let specToLaunch: string;
+        if (currentProject.project.gameSpecifications.length === 1) {
+            specToLaunch = currentProject.project.gameSpecifications[0];
+        } else {
+            const items = currentProject.project.gameSpecifications.map(spec => ({
+                label: spec.split('/').pop() || spec.split('\\').pop() || spec,
+                description: spec,
+                value: spec
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select game specification to launch'
+            });
+
+            if (!selected) {
+                return; // User cancelled
+            }
+            specToLaunch = selected.value;
+        }
+
+        const result = await SOLUZIONLauncher.launchTextEngine(specToLaunch);
         this.postMessage({
             command: 'launchResult',
             engine: 'text',
@@ -405,12 +426,33 @@ export class DashboardPanel {
 
     private async _handleLaunchWebSOLUZION() {
         const currentProject = this.projectManager.getCurrentProject();
-        if (!currentProject?.project.gameSpecification) {
-            vscode.window.showWarningMessage('No game specification selected');
+        if (!currentProject?.project.gameSpecifications || currentProject.project.gameSpecifications.length === 0) {
+            vscode.window.showWarningMessage('No game specifications selected');
             return;
         }
 
-        const result = await SOLUZIONLauncher.launchWebEngine(currentProject.project.gameSpecification);
+        // If multiple specs, let user choose which one to launch
+        let specToLaunch: string;
+        if (currentProject.project.gameSpecifications.length === 1) {
+            specToLaunch = currentProject.project.gameSpecifications[0];
+        } else {
+            const items = currentProject.project.gameSpecifications.map(spec => ({
+                label: spec.split('/').pop() || spec.split('\\').pop() || spec,
+                description: spec,
+                value: spec
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select game specification to launch'
+            });
+
+            if (!selected) {
+                return; // User cancelled
+            }
+            specToLaunch = selected.value;
+        }
+
+        const result = await SOLUZIONLauncher.launchWebEngine(specToLaunch);
         this.postMessage({
             command: 'launchResult',
             engine: 'web',
@@ -587,28 +629,22 @@ Generated by Gamification Dashboard Extension
                 </div>
             </div>
 
-            <!-- Prompting Document -->
+            <!-- Prompting Documents -->
             <div class="phase-section">
-                <h3>Prompting Document</h3>
+                <h3>Prompting Documents</h3>
                 <div class="file-selection">
-                    <div class="selected-file" id="prompting-document">
-                        <span class="file-name">No document selected</span>
-                        <button class="open-file-btn" style="display: none;">Open</button>
-                    </div>
-                    <button id="select-prompting-btn" class="select-btn">Select Prompting Document</button>
+                    <div class="file-list" id="prompting-documents-list"></div>
+                    <button id="select-prompting-btn" class="select-btn">Add Prompting Documents</button>
                     <button id="generate-spec-btn" class="action-btn">Generate Specification</button>
                 </div>
             </div>
 
-            <!-- Game Specification -->
+            <!-- Game Specifications -->
             <div class="phase-section">
-                <h3>Game Specification</h3>
+                <h3>Game Specifications</h3>
                 <div class="file-selection">
-                    <div class="selected-file" id="game-specification">
-                        <span class="file-name">No specification selected</span>
-                        <button class="open-file-btn" style="display: none;">Open</button>
-                    </div>
-                    <button id="select-game-spec-btn" class="select-btn">Select Game Specification</button>
+                    <div class="file-list" id="game-specifications-list"></div>
+                    <button id="select-game-spec-btn" class="select-btn">Add Game Specifications</button>
                     <button id="implement-game-btn" class="action-btn">Implement Game</button>
                 </div>
             </div>

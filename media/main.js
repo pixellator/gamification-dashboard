@@ -51,8 +51,8 @@
 
         // File lists and displays
         elements.sourceDocumentsList = document.getElementById('source-documents-list');
-        elements.promptingDocument = document.getElementById('prompting-document');
-        elements.gameSpecification = document.getElementById('game-specification');
+        elements.promptingDocumentsList = document.getElementById('prompting-documents-list');
+        elements.gameSpecificationsList = document.getElementById('game-specifications-list');
         elements.gameImplementationsList = document.getElementById('game-implementations-list');
         elements.evaluationToolsList = document.getElementById('evaluation-tools-list');
 
@@ -133,11 +133,11 @@
                 case 'sourceDocumentsSelected':
                     handleSourceDocumentsSelected(message.files);
                     break;
-                case 'promptingDocumentSelected':
-                    handlePromptingDocumentSelected(message.file);
+                case 'promptingDocumentsSelected':
+                    handlePromptingDocumentsSelected(message.files);
                     break;
-                case 'gameSpecificationSelected':
-                    handleGameSpecificationSelected(message.file);
+                case 'gameSpecificationsSelected':
+                    handleGameSpecificationsSelected(message.files);
                     break;
                 case 'gameImplementationsSelected':
                     handleGameImplementationsSelected(message.files);
@@ -229,8 +229,8 @@
     }
 
     function handleGenerateSpecification() {
-        if (!currentProject || !currentProject.promptingDocument) {
-            setStatus('No prompting document selected', 'warning');
+        if (!currentProject || !currentProject.promptingDocuments || currentProject.promptingDocuments.length === 0) {
+            setStatus('No prompting documents selected', 'warning');
             return;
         }
         setStatus('Generating game specification...');
@@ -238,8 +238,8 @@
     }
 
     function handleImplementGame() {
-        if (!currentProject || !currentProject.gameSpecification) {
-            setStatus('No game specification selected', 'warning');
+        if (!currentProject || !currentProject.gameSpecifications || currentProject.gameSpecifications.length === 0) {
+            setStatus('No game specifications selected', 'warning');
             return;
         }
         setStatus('Implementing game...');
@@ -247,8 +247,8 @@
     }
 
     function handleLaunchTextSOLUZION() {
-        if (!currentProject || !currentProject.gameSpecification) {
-            setStatus('No game specification selected', 'warning');
+        if (!currentProject || !currentProject.gameSpecifications || currentProject.gameSpecifications.length === 0) {
+            setStatus('No game specifications selected', 'warning');
             return;
         }
         setStatus('Launching Text SOLUZION...');
@@ -256,8 +256,8 @@
     }
 
     function handleLaunchWebSOLUZION() {
-        if (!currentProject || !currentProject.gameSpecification) {
-            setStatus('No game specification selected', 'warning');
+        if (!currentProject || !currentProject.gameSpecifications || currentProject.gameSpecifications.length === 0) {
+            setStatus('No game specifications selected', 'warning');
             return;
         }
         setStatus('Launching Web SOLUZION...');
@@ -314,20 +314,20 @@
         }
     }
 
-    function handlePromptingDocumentSelected(file) {
+    function handlePromptingDocumentsSelected(files) {
         if (currentProject) {
-            currentProject.promptingDocument = file;
-            updatePromptingDocumentDisplay();
-            setStatus('Prompting document selected', 'success');
+            currentProject.promptingDocuments = files;
+            updatePromptingDocumentsList();
+            setStatus(`${files.length} prompting document(s) selected`, 'success');
         }
     }
 
-    function handleGameSpecificationSelected(file) {
+    function handleGameSpecificationsSelected(files) {
         if (currentProject) {
-            currentProject.gameSpecification = file;
-            updateGameSpecificationDisplay();
+            currentProject.gameSpecifications = files;
+            updateGameSpecificationsList();
             updateLaunchButtons();
-            setStatus('Game specification selected', 'success');
+            setStatus(`${files.length} game specification(s) selected`, 'success');
         }
     }
 
@@ -366,8 +366,8 @@
         elements.currentPhase.value = currentProject.currentPhase || 'source-selection';
 
         updateSourceDocumentsList();
-        updatePromptingDocumentDisplay();
-        updateGameSpecificationDisplay();
+        updatePromptingDocumentsList();
+        updateGameSpecificationsList();
         updateGameImplementationsList();
         updateEvaluationToolsList();
         updateLaunchButtons();
@@ -400,37 +400,35 @@
         }
     }
 
-    function updatePromptingDocumentDisplay() {
-        const container = elements.promptingDocument;
-        const fileName = container.querySelector('.file-name');
-        const openBtn = container.querySelector('.open-file-btn');
+    function updatePromptingDocumentsList() {
+        const list = elements.promptingDocumentsList;
+        list.innerHTML = '';
 
-        if (currentProject && currentProject.promptingDocument) {
-            fileName.textContent = getFileName(currentProject.promptingDocument);
-            openBtn.style.display = 'block';
-            openBtn.onclick = () => openFile(currentProject.promptingDocument);
-            container.classList.add('has-file');
-        } else {
-            fileName.textContent = 'No document selected';
-            openBtn.style.display = 'none';
-            container.classList.remove('has-file');
+        if (currentProject && currentProject.promptingDocuments) {
+            currentProject.promptingDocuments.forEach(file => {
+                const item = createFileItem(file);
+                list.appendChild(item);
+            });
+        }
+
+        if (!list.children.length) {
+            list.innerHTML = '<div class="file-item"><span class="file-name">No prompting documents selected</span></div>';
         }
     }
 
-    function updateGameSpecificationDisplay() {
-        const container = elements.gameSpecification;
-        const fileName = container.querySelector('.file-name');
-        const openBtn = container.querySelector('.open-file-btn');
+    function updateGameSpecificationsList() {
+        const list = elements.gameSpecificationsList;
+        list.innerHTML = '';
 
-        if (currentProject && currentProject.gameSpecification) {
-            fileName.textContent = getFileName(currentProject.gameSpecification);
-            openBtn.style.display = 'block';
-            openBtn.onclick = () => openFile(currentProject.gameSpecification);
-            container.classList.add('has-file');
-        } else {
-            fileName.textContent = 'No specification selected';
-            openBtn.style.display = 'none';
-            container.classList.remove('has-file');
+        if (currentProject && currentProject.gameSpecifications) {
+            currentProject.gameSpecifications.forEach(file => {
+                const item = createFileItem(file);
+                list.appendChild(item);
+            });
+        }
+
+        if (!list.children.length) {
+            list.innerHTML = '<div class="file-item"><span class="file-name">No game specifications selected</span></div>';
         }
     }
 
@@ -467,7 +465,7 @@
     }
 
     function updateLaunchButtons() {
-        const hasGameSpec = currentProject && currentProject.gameSpecification;
+        const hasGameSpec = currentProject && currentProject.gameSpecifications && currentProject.gameSpecifications.length > 0;
         const isTestingPhase = currentProject &&
             (currentProject.currentPhase === 'play-testing' ||
              currentProject.currentPhase === 'technical-analysis');
