@@ -145,14 +145,10 @@
 
     // Event handlers
     function handleNewProject() {
-        const name = prompt('Enter project name:');
-        if (name) {
-            setStatus('Creating new project...');
-            vscode.postMessage({
-                command: 'newProject',
-                data: { name: name }
-            });
-        }
+        console.log('[DASHBOARD] New Project button clicked');
+        setStatus('Creating new project...');
+        // Ask backend to show VSCode native input dialog
+        vscode.postMessage({ command: 'newProject' });
     }
 
     function handleOpenProject() {

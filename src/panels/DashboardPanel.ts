@@ -143,15 +143,32 @@ export class DashboardPanel {
         }
     }
 
-    private async _handleNewProject(data: { name: string, saveLocation?: string }) {
+    private async _handleNewProject(data?: { name?: string, saveLocation?: string }) {
         try {
-            const projectFile = await this.projectManager.createNewProject(data.name, data.saveLocation);
+            // Prompt for project name using VSCode native dialog
+            const name = data?.name || await vscode.window.showInputBox({
+                prompt: 'Enter project name',
+                placeHolder: 'My Gamification Project',
+                validateInput: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'Project name cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (!name) {
+                // User cancelled
+                return;
+            }
+
+            const projectFile = await this.projectManager.createNewProject(name, data?.saveLocation);
             this.postMessage({
                 command: 'projectLoaded',
                 project: projectFile.project,
                 filePath: projectFile.filePath
             });
-            vscode.window.showInformationMessage(`New project created: ${data.name}`);
+            vscode.window.showInformationMessage(`New project created: ${name}`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create project: ${error}`);
         }
