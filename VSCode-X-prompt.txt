@@ -1,0 +1,58 @@
+VSCode-X-prompt.txt
+
+1. Please read the Gamification-and-Inference-Workflow.pdf document
+(call it "GIW") and create a software specification file
+Dashboard-plan.md containing a detailed description of a new VSCode
+extension to support this workflow.  The following are features that
+this dashboard should offer.
+
+2. Features of the dashboard:
+
+a. It's a new panel for VSCode that will provide interactive
+control of the processes described in GIW.
+The panel layout should reflect the left-to-right ordering
+of the phases shown in the figure in GIW.
+
+b. The panel should have a File menu that allows creating new
+gamification projects, and opening, editing, and saving existing
+ones.  The projects themselves will be represented as text files
+in a special format that makes them human-readable and readable
+by methods of the dashboard and associated software tools.
+
+c. The panel should contain drop-down menus for selecting source
+documents, prompting documents, game-specification documents,
+game-trace documents, and evaluation tools.
+
+d. When any file is selected by the user in one of these drop
+down menus, there should be a small button that when clicked
+opens the file in a VSCode editor for viewing and editing.
+
+e. When a project is opened from the file menu, its key
+attributes (defined in GIW) should be used to populate as many
+of the drop-downs and labels in the panel as are specified
+in the project file being opened.  Any unspecified items can
+be left blank or "?" in the panel.
+
+f. At the play-testing and technical analysis stage of the
+workflow the dashboard should provide a button to launch the
+game in the Text SOLUZION client and another button to
+launch the game in the Web SOLUZION client.
+
+g. There should be hooks or clear comments in the code that
+implements the panel to show where new functionality can be
+added: for example, new buttons might be added in future
+versions of the panel, an where to put the code to handle
+clicks on these buttons should be clear to future developers.
+
+h. The panel should have a stylish light-blue background,
+and all text on the panel should be in at least a 16-point
+black font.  There should be a title at the top of the
+panel in medium-sized violet lettering: "New Inferences from Gamification
+Project" and under it in larger, dark-gray lettering: "Gamification and
+Inference Workflow Dashboard".
+
+i. It should be possible to have the panel work in either
+sidebar mode (like many VSCode extensions) or full-screen
+mode. In sidebar mode, there should be scroll bars to give
+the user access to the entire panel.
+

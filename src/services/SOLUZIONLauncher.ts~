@@ -1,0 +1,39 @@
+import * as vscode from 'vscode';
+import * as cp from 'child_process';
+import * as path from 'path';
+
+export interface LaunchResult {
+    success: boolean;
+    message: string;
+    process?: cp.ChildProcess;
+}
+
+export class SOLUZIONLauncher {
+    private static textEngineProcess: cp.ChildProcess | null = null;
+    private static webEngineProcess: cp.ChildProcess | null = null;
+
+    static async launchTextEngine(gameFilePath: string): Promise<LaunchResult> {
+        try {
+            const soluzionTextPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('soluzionTextPath');
+
+            if (!soluzionTextPath) {
+                return {
+                    success: false,
+                    message: 'SOLUZION Text engine path not configured. Please set gamificationDashboard.soluzionTextPath in settings.'
+                };
+            }
+
+            // Kill existing process if running
+            if (this.textEngineProcess) {
+                this.textEngineProcess.kill();
+            }
+
+            // Launch SOLUZION Text engine
+            const args = [gameFilePath];
+            this.textEngineProcess = cp.spawn(soluzionTextPath, args, {
+                stdio: 'pipe',
+                cwd: path.dirname(gameFilePath)
+            });
+
+            // Handle process events
+            this.textEngineProcess.on('error', (error) => {\n                vscode.window.showErrorMessage(`SOLUZION Text engine error: ${error.message}`);\n            });\n\n            this.textEngineProcess.on('exit', (code) => {\n                console.log(`SOLUZION Text engine exited with code ${code}`);\n                this.textEngineProcess = null;\n            });\n\n            // Show output in terminal\n            const terminal = vscode.window.createTerminal({\n                name: 'SOLUZION Text Engine',\n                shellPath: soluzionTextPath,\n                shellArgs: args\n            });\n            terminal.show();\n\n            return {\n                success: true,\n                message: 'SOLUZION Text engine launched successfully',\n                process: this.textEngineProcess\n            };\n        } catch (error) {\n            return {\n                success: false,\n                message: `Failed to launch SOLUZION Text engine: ${error}`\n            };\n        }\n    }\n\n    static async launchWebEngine(gameFilePath: string): Promise<LaunchResult> {\n        try {\n            const soluzionWebPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('soluzionWebPath');\n            \n            if (!soluzionWebPath) {\n                return {\n                    success: false,\n                    message: 'SOLUZION Web engine path not configured. Please set gamificationDashboard.soluzionWebPath in settings.'\n                };\n            }\n\n            // Kill existing process if running\n            if (this.webEngineProcess) {\n                this.webEngineProcess.kill();\n            }\n\n            // Launch SOLUZION Web engine\n            const args = [gameFilePath];\n            this.webEngineProcess = cp.spawn(soluzionWebPath, args, {\n                stdio: 'pipe',\n                cwd: path.dirname(gameFilePath)\n            });\n\n            // Handle process events\n            this.webEngineProcess.on('error', (error) => {\n                vscode.window.showErrorMessage(`SOLUZION Web engine error: ${error.message}`);\n            });\n\n            this.webEngineProcess.on('exit', (code) => {\n                console.log(`SOLUZION Web engine exited with code ${code}`);\n                this.webEngineProcess = null;\n            });\n\n            // Show output in terminal\n            const terminal = vscode.window.createTerminal({\n                name: 'SOLUZION Web Engine',\n                shellPath: soluzionWebPath,\n                shellArgs: args\n            });\n            terminal.show();\n\n            // Try to open browser after a short delay\n            setTimeout(() => {\n                vscode.env.openExternal(vscode.Uri.parse('http://localhost:8000'));\n            }, 2000);\n\n            return {\n                success: true,\n                message: 'SOLUZION Web engine launched successfully. Opening browser...',\n                process: this.webEngineProcess\n            };\n        } catch (error) {\n            return {\n                success: false,\n                message: `Failed to launch SOLUZION Web engine: ${error}`\n            };\n        }\n    }\n\n    static stopTextEngine(): boolean {\n        if (this.textEngineProcess) {\n            this.textEngineProcess.kill();\n            this.textEngineProcess = null;\n            return true;\n        }\n        return false;\n    }\n\n    static stopWebEngine(): boolean {\n        if (this.webEngineProcess) {\n            this.webEngineProcess.kill();\n            this.webEngineProcess = null;\n            return true;\n        }\n        return false;\n    }\n\n    static isTextEngineRunning(): boolean {\n        return this.textEngineProcess !== null && !this.textEngineProcess.killed;\n    }\n\n    static isWebEngineRunning(): boolean {\n        return this.webEngineProcess !== null && !this.webEngineProcess.killed;\n    }\n\n    static stopAllEngines(): void {\n        this.stopTextEngine();\n        this.stopWebEngine();\n    }\n\n    // Helper method to validate game file\n    static validateGameFile(filePath: string): boolean {\n        try {\n            // Basic validation - check if file exists and has .py extension\n            return filePath.endsWith('.py') && require('fs').existsSync(filePath);\n        } catch {\n            return false;\n        }\n    }\n\n    // Configure SOLUZION paths through settings\n    static async configurePaths(): Promise<void> {\n        const textPath = await vscode.window.showInputBox({\n            prompt: 'Enter path to SOLUZION Text engine executable',\n            placeHolder: '/path/to/soluzion-text'\n        });\n\n        if (textPath) {\n            await vscode.workspace.getConfiguration('gamificationDashboard').update(\n                'soluzionTextPath',\n                textPath,\n                vscode.ConfigurationTarget.Global\n            );\n        }\n\n        const webPath = await vscode.window.showInputBox({\n            prompt: 'Enter path to SOLUZION Web engine',\n            placeHolder: '/path/to/soluzion-web'\n        });\n\n        if (webPath) {\n            await vscode.workspace.getConfiguration('gamificationDashboard').update(\n                'soluzionWebPath',\n                webPath,\n                vscode.ConfigurationTarget.Global\n            );\n        }\n\n        vscode.window.showInformationMessage('SOLUZION paths configured successfully');\n    }\n}

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run compile:*)",
+      "Bash(cp:*)",
+      "Bash(vsce package:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "name": "gamification-dashboard",
+  "displayName": "Gamification and Inference Workflow Dashboard",
+  "description": "Interactive dashboard for managing the Gamification and Inference Workflow (GIW) for scholarly research",
+  "version": "1.0.0",
+  "publisher": "uw-nifgp",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:gamificationDashboard.showDashboard"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gamificationDashboard.showDashboard",
+        "title": "Show Gamification Dashboard",
+        "category": "Gamification"
+      },
+      {
+        "command": "gamificationDashboard.newProject",
+        "title": "New Gamification Project",
+        "category": "Gamification"
+      },
+      {
+        "command": "gamificationDashboard.openProject",
+        "title": "Open Gamification Project",
+        "category": "Gamification"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "gamificationDashboard.showDashboard"
+        },
+        {
+          "command": "gamificationDashboard.newProject"
+        },
+        {
+          "command": "gamificationDashboard.openProject"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "gamificationDashboard",
+          "name": "Gamification Dashboard",
+          "when": "gamificationDashboard.enabled"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Gamification Dashboard",
+      "properties": {
+        "gamificationDashboard.defaultProjectDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for gamification projects"
+        },
+        "gamificationDashboard.soluzionTextPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to SOLUZION Text engine executable"
+        },
+        "gamificationDashboard.soluzionWebPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to SOLUZION Web engine"
+        },
+        "gamificationDashboard.guidelinesRepository": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Repository of Guidelines directory"
+        },
+        "gamificationDashboard.panelMode": {
+          "type": "string",
+          "enum": [
+            "sidebar",
+            "fullscreen"
+          ],
+          "default": "sidebar",
+          "description": "Default panel display mode"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.5"
+  }
+}

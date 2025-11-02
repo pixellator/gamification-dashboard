@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# Compiled output
+out/
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode-test/
+*.log
+
+# Temporary files
+*.tmp
+extract-conversation.js
+
+# User-specific VS Code settings (keep settings.local.json)
+.vscode/settings.json

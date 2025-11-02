@@ -1,0 +1,26 @@
+VSCode-X-prompt.txt
+
+1. Please read the Gamification-and-Inference-Workflow.pdf document
+(call it "GIW") and create a software specification file
+Dashboard-plan.md containing a detailed description of a new VSCode
+extension to support this workflow.  The following are features that
+this dashboard should offer.
+
+2. Features of the dashboard:
+
+a. It's a new panel for VSCode that will provide interactive
+control of the processes described in GIW.
+
+b. The panel should have a File menu that allows creating new
+gamification projects, and opening, editing, and saving existing
+ones.  The projects themselves will be represented as text files
+in a special format that makes them human-readable and readable
+by methods of the dashboard and associated software tools.
+
+c. The panel should contain drop-down menus for selecting source
+documents, prompting documents, game-specification documents,
+game-trace documents, and evaluation tools.
+
+d. When any file is selected by the user in one of these drop
+down menus, there should be a small button that when clicked
+opens the file in a VSCode editor for viewing and editing.
