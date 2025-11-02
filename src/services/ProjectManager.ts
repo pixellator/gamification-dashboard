@@ -114,6 +114,7 @@ export class ProjectManager {
 
         const project: any = {
             sourceDocuments: [],
+            gameImplementations: [],
             gameTraces: [],
             evaluationTools: [],
             metadata: {}
@@ -134,6 +135,11 @@ export class ProjectManager {
                 case 'source_documents':
                     if (line.startsWith('- ')) {
                         project.sourceDocuments.push(line.slice(2));
+                    }
+                    break;
+                case 'game_implementations':
+                    if (line.startsWith('- ')) {
+                        project.gameImplementations.push(line.slice(2));
                     }
                     break;
                 case 'game_traces':
@@ -211,6 +217,14 @@ export class ProjectManager {
         if (project.gameSpecification) {
             content += '[GAME_SPECIFICATION]\n';
             content += `${project.gameSpecification}\n\n`;
+        }
+
+        if (project.gameImplementations.length > 0) {
+            content += '[GAME_IMPLEMENTATIONS]\n';
+            for (const impl of project.gameImplementations) {
+                content += `- ${impl}\n`;
+            }
+            content += '\n';
         }
 
         if (project.gameTraces.length > 0) {

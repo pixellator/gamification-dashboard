@@ -42,12 +42,18 @@
         elements.selectSourceBtn = document.getElementById('select-source-btn');
         elements.selectPromptingBtn = document.getElementById('select-prompting-btn');
         elements.selectGameSpecBtn = document.getElementById('select-game-spec-btn');
+        elements.selectGameImplBtn = document.getElementById('select-game-impl-btn');
         elements.selectEvalToolsBtn = document.getElementById('select-eval-tools-btn');
+
+        // Action buttons
+        elements.generateSpecBtn = document.getElementById('generate-spec-btn');
+        elements.implementGameBtn = document.getElementById('implement-game-btn');
 
         // File lists and displays
         elements.sourceDocumentsList = document.getElementById('source-documents-list');
         elements.promptingDocument = document.getElementById('prompting-document');
         elements.gameSpecification = document.getElementById('game-specification');
+        elements.gameImplementationsList = document.getElementById('game-implementations-list');
         elements.evaluationToolsList = document.getElementById('evaluation-tools-list');
 
         // Launch buttons
@@ -92,7 +98,12 @@
         elements.selectSourceBtn.addEventListener('click', handleSelectSourceDocuments);
         elements.selectPromptingBtn.addEventListener('click', handleSelectPromptingDocument);
         elements.selectGameSpecBtn.addEventListener('click', handleSelectGameSpecification);
+        elements.selectGameImplBtn.addEventListener('click', handleSelectGameImplementations);
         elements.selectEvalToolsBtn.addEventListener('click', handleSelectEvaluationTools);
+
+        // Action button events
+        elements.generateSpecBtn.addEventListener('click', handleGenerateSpecification);
+        elements.implementGameBtn.addEventListener('click', handleImplementGame);
 
         // Launch events
         elements.launchTextBtn.addEventListener('click', handleLaunchTextSOLUZION);
@@ -127,6 +138,9 @@
                     break;
                 case 'gameSpecificationSelected':
                     handleGameSpecificationSelected(message.file);
+                    break;
+                case 'gameImplementationsSelected':
+                    handleGameImplementationsSelected(message.files);
                     break;
                 case 'evaluationToolsSelected':
                     handleEvaluationToolsSelected(message.files);
@@ -204,9 +218,32 @@
         vscode.postMessage({ command: 'selectGameSpecification' });
     }
 
+    function handleSelectGameImplementations() {
+        setStatus('Selecting game implementations...');
+        vscode.postMessage({ command: 'selectGameImplementations' });
+    }
+
     function handleSelectEvaluationTools() {
         setStatus('Selecting evaluation tools...');
         vscode.postMessage({ command: 'selectEvaluationTools' });
+    }
+
+    function handleGenerateSpecification() {
+        if (!currentProject || !currentProject.promptingDocument) {
+            setStatus('No prompting document selected', 'warning');
+            return;
+        }
+        setStatus('Generating game specification...');
+        vscode.postMessage({ command: 'generateSpecification' });
+    }
+
+    function handleImplementGame() {
+        if (!currentProject || !currentProject.gameSpecification) {
+            setStatus('No game specification selected', 'warning');
+            return;
+        }
+        setStatus('Implementing game...');
+        vscode.postMessage({ command: 'implementGame' });
     }
 
     function handleLaunchTextSOLUZION() {
@@ -294,6 +331,14 @@
         }
     }
 
+    function handleGameImplementationsSelected(files) {
+        if (currentProject) {
+            currentProject.gameImplementations = files;
+            updateGameImplementationsList();
+            setStatus(`${files.length} game implementation(s) selected`, 'success');
+        }
+    }
+
     function handleEvaluationToolsSelected(files) {
         if (currentProject) {
             currentProject.evaluationTools = files;
@@ -323,6 +368,7 @@
         updateSourceDocumentsList();
         updatePromptingDocumentDisplay();
         updateGameSpecificationDisplay();
+        updateGameImplementationsList();
         updateEvaluationToolsList();
         updateLaunchButtons();
         updateUIForPhase(currentProject.currentPhase);
@@ -385,6 +431,22 @@
             fileName.textContent = 'No specification selected';
             openBtn.style.display = 'none';
             container.classList.remove('has-file');
+        }
+    }
+
+    function updateGameImplementationsList() {
+        const list = elements.gameImplementationsList;
+        list.innerHTML = '';
+
+        if (currentProject && currentProject.gameImplementations) {
+            currentProject.gameImplementations.forEach(file => {
+                const item = createFileItem(file);
+                list.appendChild(item);
+            });
+        }
+
+        if (!list.children.length) {
+            list.innerHTML = '<div class="file-item"><span class="file-name">No game implementations selected</span></div>';
         }
     }
 

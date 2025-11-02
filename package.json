@@ -77,6 +77,31 @@
           "default": "",
           "description": "Path to Repository of Guidelines directory"
         },
+        "gamificationDashboard.sourceDocumentsDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for source documents (PDFs, papers, etc.)"
+        },
+        "gamificationDashboard.gameSpecificationsDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for game specification files"
+        },
+        "gamificationDashboard.gameImplementationsDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for game implementation files"
+        },
+        "gamificationDashboard.evaluationToolsDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for evaluation and analysis tools"
+        },
+        "gamificationDashboard.resultsDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Default directory for game traces and results"
+        },
         "gamificationDashboard.panelMode": {
           "type": "string",
           "enum": [

@@ -111,8 +111,17 @@ export class DashboardPanel {
                 case 'selectGameSpecification':
                     await this._handleSelectGameSpecification();
                     break;
+                case 'selectGameImplementations':
+                    await this._handleSelectGameImplementations();
+                    break;
                 case 'selectEvaluationTools':
                     await this._handleSelectEvaluationTools();
+                    break;
+                case 'generateSpecification':
+                    await this._handleGenerateSpecification();
+                    break;
+                case 'implementGame':
+                    await this._handleImplementGame();
                     break;
                 case 'openFile':
                     await this._handleOpenFile(message.data);
@@ -162,7 +171,31 @@ export class DashboardPanel {
                 return;
             }
 
-            const projectFile = await this.projectManager.createNewProject(name, data?.saveLocation);
+            // Prompt for save location if not provided
+            let saveLocation = data?.saveLocation;
+            if (!saveLocation) {
+                const defaultProjectDir = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('defaultProjectDirectory');
+                const defaultUri = defaultProjectDir ? vscode.Uri.file(defaultProjectDir) : undefined;
+
+                const uri = await vscode.window.showSaveDialog({
+                    defaultUri: defaultUri,
+                    filters: {
+                        'Gamification Projects': ['gip'],
+                        'All Files': ['*']
+                    },
+                    saveLabel: 'Save Project'
+                });
+
+                if (!uri) {
+                    // User cancelled save dialog
+                    return;
+                }
+
+                saveLocation = uri.fsPath.replace(/\.gip$/, ''); // Remove .gip extension as createNewProject adds it
+                saveLocation = saveLocation.substring(0, saveLocation.lastIndexOf('/') || saveLocation.lastIndexOf('\\'));
+            }
+
+            const projectFile = await this.projectManager.createNewProject(name, saveLocation);
             this.postMessage({
                 command: 'projectLoaded',
                 project: projectFile.project,
@@ -174,9 +207,36 @@ export class DashboardPanel {
         }
     }
 
-    private async _handleOpenProject(data: { filePath: string }) {
+    private async _handleOpenProject(data?: { filePath?: string }) {
         try {
-            const projectFile = await this.projectManager.openProject(data.filePath);
+            let filePath = data?.filePath;
+
+            // If no file path provided, show file picker
+            if (!filePath) {
+                const defaultProjectDir = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('defaultProjectDirectory');
+                const defaultUri = defaultProjectDir ? vscode.Uri.file(defaultProjectDir) : undefined;
+
+                const uri = await vscode.window.showOpenDialog({
+                    canSelectFiles: true,
+                    canSelectFolders: false,
+                    canSelectMany: false,
+                    defaultUri: defaultUri,
+                    filters: {
+                        'Gamification Projects': ['gip'],
+                        'All Files': ['*']
+                    },
+                    openLabel: 'Open Project'
+                });
+
+                if (!uri || uri.length === 0) {
+                    // User cancelled
+                    return;
+                }
+
+                filePath = uri[0].fsPath;
+            }
+
+            const projectFile = await this.projectManager.openProject(filePath);
             this.postMessage({
                 command: 'projectLoaded',
                 project: projectFile.project,
@@ -270,6 +330,17 @@ export class DashboardPanel {
         }
     }
 
+    private async _handleSelectGameImplementations() {
+        const files = await FileSelector.selectGameImplementations();
+        if (files.length > 0) {
+            this.projectManager.updateProject({ gameImplementations: files });
+            this.postMessage({
+                command: 'gameImplementationsSelected',
+                files: files
+            });
+        }
+    }
+
     private async _handleSelectEvaluationTools() {
         const files = await FileSelector.selectEvaluationTools();
         if (files.length > 0) {
@@ -279,6 +350,32 @@ export class DashboardPanel {
                 files: files
             });
         }
+    }
+
+    private async _handleGenerateSpecification() {
+        const currentProject = this.projectManager.getCurrentProject();
+        if (!currentProject?.project.promptingDocument) {
+            vscode.window.showWarningMessage('No prompting document selected');
+            return;
+        }
+
+        // Placeholder for future implementation
+        vscode.window.showInformationMessage(
+            'Generate Specification: This will use AI to generate a game specification from the prompting document. (Feature coming soon)'
+        );
+    }
+
+    private async _handleImplementGame() {
+        const currentProject = this.projectManager.getCurrentProject();
+        if (!currentProject?.project.gameSpecification) {
+            vscode.window.showWarningMessage('No game specification selected');
+            return;
+        }
+
+        // Placeholder for future implementation
+        vscode.window.showInformationMessage(
+            'Implement Game: This will use AI to implement the game based on the specification. (Feature coming soon)'
+        );
     }
 
     private async _handleOpenFile(data: { filePath: string }) {
@@ -499,6 +596,7 @@ Generated by Gamification Dashboard Extension
                         <button class="open-file-btn" style="display: none;">Open</button>
                     </div>
                     <button id="select-prompting-btn" class="select-btn">Select Prompting Document</button>
+                    <button id="generate-spec-btn" class="action-btn">Generate Specification</button>
                 </div>
             </div>
 
@@ -511,6 +609,16 @@ Generated by Gamification Dashboard Extension
                         <button class="open-file-btn" style="display: none;">Open</button>
                     </div>
                     <button id="select-game-spec-btn" class="select-btn">Select Game Specification</button>
+                    <button id="implement-game-btn" class="action-btn">Implement Game</button>
+                </div>
+            </div>
+
+            <!-- Game Implementations -->
+            <div class="phase-section">
+                <h3>Game Implementations</h3>
+                <div class="file-selection">
+                    <div class="file-list" id="game-implementations-list"></div>
+                    <button id="select-game-impl-btn" class="select-btn">Add Game Implementations</button>
                 </div>
             </div>
 

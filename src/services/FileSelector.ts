@@ -10,10 +10,18 @@ export interface FileOption {
 
 export class FileSelector {
     static async selectSourceDocuments(): Promise<string[]> {
+        const defaultPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('sourceDocumentsDirectory');
+
+        let defaultUri: vscode.Uri | undefined;
+        if (defaultPath && fs.existsSync(defaultPath)) {
+            defaultUri = vscode.Uri.file(defaultPath);
+        }
+
         const files = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
             canSelectMany: true,
+            defaultUri,
             filters: {
                 'Documents': ['pdf', 'txt', 'md', 'docx'],
                 'All Files': ['*']
@@ -48,10 +56,18 @@ export class FileSelector {
     }
 
     static async selectGameSpecification(): Promise<string | undefined> {
+        const defaultPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('gameSpecificationsDirectory');
+
+        let defaultUri: vscode.Uri | undefined;
+        if (defaultPath && fs.existsSync(defaultPath)) {
+            defaultUri = vscode.Uri.file(defaultPath);
+        }
+
         const file = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
             canSelectMany: false,
+            defaultUri,
             filters: {
                 'Python Files': ['py'],
                 'All Files': ['*']
@@ -62,11 +78,43 @@ export class FileSelector {
         return file ? file[0].fsPath : undefined;
     }
 
-    static async selectEvaluationTools(): Promise<string[]> {
+    static async selectGameImplementations(): Promise<string[]> {
+        const defaultPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('gameImplementationsDirectory');
+
+        let defaultUri: vscode.Uri | undefined;
+        if (defaultPath && fs.existsSync(defaultPath)) {
+            defaultUri = vscode.Uri.file(defaultPath);
+        }
+
         const files = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
             canSelectMany: true,
+            defaultUri,
+            filters: {
+                'Python Files': ['py'],
+                'JavaScript Files': ['js'],
+                'All Files': ['*']
+            },
+            openLabel: 'Select Game Implementations'
+        });
+
+        return files ? files.map(file => file.fsPath) : [];
+    }
+
+    static async selectEvaluationTools(): Promise<string[]> {
+        const defaultPath = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('evaluationToolsDirectory');
+
+        let defaultUri: vscode.Uri | undefined;
+        if (defaultPath && fs.existsSync(defaultPath)) {
+            defaultUri = vscode.Uri.file(defaultPath);
+        }
+
+        const files = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: true,
+            defaultUri,
             filters: {
                 'Python Files': ['py'],
                 'Executable Files': ['exe', 'sh'],

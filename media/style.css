@@ -227,6 +227,22 @@ body {
     background-color: #F57C00;
 }
 
+.action-btn {
+    padding: 10px 15px;
+    font-size: 16pt;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 5px;
+}
+
+.action-btn:hover {
+    background-color: #45a049;
+}
+
 /* Testing Controls */
 .testing-controls {
     display: flex;

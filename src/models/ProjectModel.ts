@@ -23,6 +23,7 @@ export interface GamificationProject {
     sourceDocuments: string[];
     promptingDocument?: string;
     gameSpecification?: string;
+    gameImplementations: string[];
     gameTraces: string[];
     evaluationTools: string[];
     currentPhase: WorkflowPhase;
@@ -70,6 +71,7 @@ export class ProjectModelFactory {
             name: name,
             version: "1.0",
             sourceDocuments: [],
+            gameImplementations: [],
             gameTraces: [],
             evaluationTools: [],
             currentPhase: WorkflowPhase.SourceSelection,
