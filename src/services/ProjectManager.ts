@@ -119,6 +119,7 @@ export class ProjectManager {
             gameImplementations: [],
             gameTraces: [],
             evaluationTools: [],
+            history: [],
             metadata: {}
         };
 
@@ -162,6 +163,18 @@ export class ProjectManager {
                 case 'evaluation_tools':
                     if (line.startsWith('- ')) {
                         project.evaluationTools.push(line.slice(2));
+                    }
+                    break;
+                case 'history':
+                    // Parse history records (JSON format)
+                    if (line.startsWith('- ')) {
+                        try {
+                            const historyJson = line.slice(2);
+                            const historyRecord = JSON.parse(historyJson);
+                            project.history.push(historyRecord);
+                        } catch (e) {
+                            console.error('Failed to parse history record:', e);
+                        }
                     }
                     break;
                 case 'metadata':
@@ -263,6 +276,15 @@ export class ProjectManager {
             content += '[EVALUATION_TOOLS]\n';
             for (const tool of project.evaluationTools) {
                 content += `- ${tool}\n`;
+            }
+            content += '\n';
+        }
+
+        if (project.history && project.history.length > 0) {
+            content += '[HISTORY]\n';
+            for (const record of project.history) {
+                // Save history records as JSON on single lines
+                content += `- ${JSON.stringify(record)}\n`;
             }
             content += '\n';
         }

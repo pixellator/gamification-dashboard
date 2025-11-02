@@ -3,7 +3,8 @@ import * as path from 'path';
 import { ProjectManager } from '../services/ProjectManager';
 import { FileSelector } from '../services/FileSelector';
 import { SOLUZIONLauncher } from '../services/SOLUZIONLauncher';
-import { GamificationProject, WorkflowPhase } from '../models/ProjectModel';
+import { ClaudeService } from '../services/ClaudeService';
+import { GamificationProject, WorkflowPhase, HistoryActionType, ProjectModelFactory } from '../models/ProjectModel';
 
 export class DashboardPanel {
     public static currentPanel: DashboardPanel | undefined;
@@ -359,10 +360,76 @@ export class DashboardPanel {
             return;
         }
 
-        // Placeholder for future implementation
-        vscode.window.showInformationMessage(
-            `Generate Specification: This will use AI to generate a game specification from ${currentProject.project.promptingDocuments.length} prompting document(s). (Feature coming soon)`
-        );
+        if (!currentProject.project.sourceDocuments || currentProject.project.sourceDocuments.length === 0) {
+            vscode.window.showWarningMessage('No source documents selected');
+            return;
+        }
+
+        // Get output directory from settings
+        const gameSpecsDir = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('gameSpecificationsDirectory');
+        if (!gameSpecsDir) {
+            vscode.window.showErrorMessage('Please configure Game Specifications Directory in settings');
+            return;
+        }
+
+        // Show progress
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Generating Game Specification',
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: 'Sending request to Claude...' });
+
+            // Generate specification using Claude
+            const result = await ClaudeService.generateGameSpecification(
+                currentProject.project.sourceDocuments,
+                currentProject.project.promptingDocuments,
+                gameSpecsDir,
+                currentProject.project.name
+            );
+
+            if (result.success && result.outputPath) {
+                progress.report({ message: 'Saving specification...' });
+
+                // Create history record
+                const historyRecord = ProjectModelFactory.createHistoryRecord(
+                    HistoryActionType.GenerateSpecification,
+                    result.outputPath,
+                    {
+                        sourceDocuments: [...currentProject.project.sourceDocuments],
+                        promptingDocuments: [...currentProject.project.promptingDocuments]
+                    }
+                );
+
+                // Add to project history
+                const updatedHistory = [...currentProject.project.history, historyRecord];
+                this.projectManager.updateProject({ history: updatedHistory });
+
+                // Add to game specifications list
+                const updatedSpecs = [...currentProject.project.gameSpecifications, result.outputPath];
+                this.projectManager.updateProject({ gameSpecifications: updatedSpecs });
+
+                // Save project
+                await this.projectManager.saveProject(currentProject);
+
+                // Notify webview
+                this.postMessage({
+                    command: 'gameSpecificationsSelected',
+                    files: updatedSpecs
+                });
+
+                vscode.window.showInformationMessage(
+                    `Game specification generated: ${path.basename(result.outputPath)}`
+                );
+
+                // Open the generated file
+                await FileSelector.openFileInEditor(result.outputPath);
+            } else {
+                vscode.window.showErrorMessage(
+                    `Failed to generate specification: ${result.error}`
+                );
+            }
+        });
     }
 
     private async _handleImplementGame() {
@@ -372,10 +439,69 @@ export class DashboardPanel {
             return;
         }
 
-        // Placeholder for future implementation
-        vscode.window.showInformationMessage(
-            `Implement Game: This will use AI to implement the game based on ${currentProject.project.gameSpecifications.length} specification(s). (Feature coming soon)`
-        );
+        // Get output directory from settings
+        const gameImplDir = vscode.workspace.getConfiguration('gamificationDashboard').get<string>('gameImplementationsDirectory');
+        if (!gameImplDir) {
+            vscode.window.showErrorMessage('Please configure Game Implementations Directory in settings');
+            return;
+        }
+
+        // Show progress
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Implementing Game',
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: 'Sending request to Claude...' });
+
+            // Implement game using Claude
+            const result = await ClaudeService.implementGame(
+                currentProject.project.gameSpecifications,
+                gameImplDir,
+                currentProject.project.name
+            );
+
+            if (result.success && result.outputPath) {
+                progress.report({ message: 'Saving implementation...' });
+
+                // Create history record
+                const historyRecord = ProjectModelFactory.createHistoryRecord(
+                    HistoryActionType.ImplementGame,
+                    result.outputPath,
+                    {
+                        gameSpecifications: [...currentProject.project.gameSpecifications]
+                    }
+                );
+
+                // Add to project history
+                const updatedHistory = [...currentProject.project.history, historyRecord];
+                this.projectManager.updateProject({ history: updatedHistory });
+
+                // Add to game implementations list
+                const updatedImpls = [...currentProject.project.gameImplementations, result.outputPath];
+                this.projectManager.updateProject({ gameImplementations: updatedImpls });
+
+                // Save project
+                await this.projectManager.saveProject(currentProject);
+
+                // Notify webview
+                this.postMessage({
+                    command: 'gameImplementationsSelected',
+                    files: updatedImpls
+                });
+
+                vscode.window.showInformationMessage(
+                    `Game implementation generated: ${path.basename(result.outputPath)}`
+                );
+
+                // Open the generated file
+                await FileSelector.openFileInEditor(result.outputPath);
+            } else {
+                vscode.window.showErrorMessage(
+                    `Failed to implement game: ${result.error}`
+                );
+            }
+        });
     }
 
     private async _handleOpenFile(data: { filePath: string }) {

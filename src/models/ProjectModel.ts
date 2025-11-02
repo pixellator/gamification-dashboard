@@ -8,6 +8,29 @@ export enum WorkflowPhase {
     Documentation = "documentation"
 }
 
+export enum HistoryActionType {
+    GenerateSpecification = "generate-specification",
+    ImplementGame = "implement-game",
+    RunEvaluation = "run-evaluation",
+    CustomAction = "custom-action"
+}
+
+export interface HistoryRecord {
+    id: string;
+    timestamp: string;
+    actionType: HistoryActionType;
+    outputFile: string;
+    inputs: {
+        sourceDocuments?: string[];
+        promptingDocuments?: string[];
+        gameSpecifications?: string[];
+        [key: string]: any;
+    };
+    metadata?: {
+        [key: string]: any;
+    };
+}
+
 export interface ProjectMetadata {
     scholar?: string;
     collaborator?: string;
@@ -27,6 +50,7 @@ export interface GamificationProject {
     gameTraces: string[];
     evaluationTools: string[];
     currentPhase: WorkflowPhase;
+    history: HistoryRecord[];
     metadata: ProjectMetadata;
 }
 
@@ -77,10 +101,32 @@ export class ProjectModelFactory {
             gameTraces: [],
             evaluationTools: [],
             currentPhase: WorkflowPhase.SourceSelection,
+            history: [],
             metadata: {
                 created: now,
                 lastModified: now
             }
+        };
+    }
+
+    static createHistoryRecord(
+        actionType: HistoryActionType,
+        outputFile: string,
+        inputs: {
+            sourceDocuments?: string[];
+            promptingDocuments?: string[];
+            gameSpecifications?: string[];
+            [key: string]: any;
+        },
+        metadata?: { [key: string]: any }
+    ): HistoryRecord {
+        return {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: new Date().toISOString(),
+            actionType,
+            outputFile,
+            inputs,
+            metadata
         };
     }
 
