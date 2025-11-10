@@ -102,6 +102,36 @@
           "default": "",
           "description": "Default directory for game traces and results"
         },
+        "gamificationDashboard.aiProvider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "google",
+            "openai"
+          ],
+          "default": "google",
+          "description": "AI provider to use for game generation (Anthropic Claude, Google Gemini, or OpenAI)"
+        },
+        "gamificationDashboard.aiModel": {
+          "type": "string",
+          "default": "gemini-2.5-flash",
+          "description": "AI model to use. Examples: gemini-2.5-flash, gemini-1.5-pro, gemini-1.5-flash, claude-3-5-sonnet-20241022, gpt-4o"
+        },
+        "gamificationDashboard.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key for Claude AI integration. Get your API key from https://console.anthropic.com/"
+        },
+        "gamificationDashboard.googleApiKey": {
+          "type": "string",
+          "default": "AIzaSyC1ybhlfXrOzL-lr_nTbHrJtPVCgUMPAeA",
+          "description": "Google AI API key for Gemini integration. Get your API key from https://aistudio.google.com/apikey"
+        },
+        "gamificationDashboard.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API key for GPT integration. Get your API key from https://platform.openai.com/api-keys"
+        },
         "gamificationDashboard.panelMode": {
           "type": "string",
           "enum": [
@@ -120,8 +150,18 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
+    "@types/mime-types": "^3.0.1",
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "undici-types": "^7.16.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@google/genai": "^1.29.0",
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.3",
+    "mime-types": "^3.0.1",
+    "openai": "^6.7.0"
   }
 }

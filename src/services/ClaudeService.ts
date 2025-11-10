@@ -1,12 +1,18 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
+import { GeminiService } from './GeminiService';
 
 export interface ClaudeGenerationResult {
     success: boolean;
     outputPath?: string;
     error?: string;
 }
+
+type AIProvider = 'anthropic' | 'google' | 'openai';
 
 export class ClaudeService {
     /**
@@ -19,6 +25,24 @@ export class ClaudeService {
         projectName: string
     ): Promise<ClaudeGenerationResult> {
         try {
+            const config = vscode.workspace.getConfiguration('gamificationDashboard');
+            const provider = config.get<AIProvider>('aiProvider') || 'anthropic';
+            const model = config.get<string>('aiModel') || 'gemini-2.5-flash';
+
+            // Use GeminiService for Google provider with file upload support
+            if (provider === 'google') {
+                // Use gemini-2.5-flash as default for Google, or the configured model
+                const geminiModel = model.includes('gemini') ? model : 'gemini-2.5-flash';
+                return await GeminiService.generateGameSpecification(
+                    sourceDocuments,
+                    promptingDocuments,
+                    outputDirectory,
+                    projectName,
+                    geminiModel
+                );
+            }
+
+            // For other providers, use the original text-based approach
             // Read all source documents
             const sourceContents = await Promise.all(
                 sourceDocuments.map(async (filePath) => {
@@ -37,11 +61,11 @@ export class ClaudeService {
                 })
             );
 
-            // Build the prompt for Claude
+            // Build the prompt
             const prompt = this.buildSpecificationPrompt(sourceContents, promptingContents, projectName);
 
-            // Send to Claude using VSCode's Language Model API
-            const result = await this.sendToClaudeAPI(prompt);
+            // Send to AI provider
+            const result = await this.sendToAI(prompt);
 
             // Generate output filename
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -72,6 +96,23 @@ export class ClaudeService {
         projectName: string
     ): Promise<ClaudeGenerationResult> {
         try {
+            const config = vscode.workspace.getConfiguration('gamificationDashboard');
+            const provider = config.get<AIProvider>('aiProvider') || 'anthropic';
+            const model = config.get<string>('aiModel') || 'gemini-2.5-flash';
+
+            // Use GeminiService for Google provider with file upload support
+            if (provider === 'google') {
+                // Use gemini-2.5-flash as default for Google, or the configured model
+                const geminiModel = model.includes('gemini') ? model : 'gemini-2.5-flash';
+                return await GeminiService.implementGame(
+                    gameSpecifications,
+                    outputDirectory,
+                    projectName,
+                    geminiModel
+                );
+            }
+
+            // For other providers, use the original text-based approach
             // Read all game specifications
             const specContents = await Promise.all(
                 gameSpecifications.map(async (filePath) => {
@@ -81,11 +122,11 @@ export class ClaudeService {
                 })
             );
 
-            // Build the prompt for Claude
+            // Build the prompt
             const prompt = this.buildImplementationPrompt(specContents, projectName);
 
-            // Send to Claude using VSCode's Language Model API
-            const result = await this.sendToClaudeAPI(prompt);
+            // Send to AI provider
+            const result = await this.sendToAI(prompt);
 
             // Generate output filename (zip file)
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -158,33 +199,85 @@ Please provide all necessary files for a working SOLUZION game, including:
 Format your response as a structured set of files that can be packaged into a zip archive.`;
     }
 
-    private static async sendToClaudeAPI(prompt: string): Promise<string> {
+    private static async sendToAI(prompt: string): Promise<string> {
         try {
-            // Try to use VSCode's Language Model API (Claude)
-            const models = await vscode.lm.selectChatModels({
-                vendor: 'anthropic',
-                family: 'claude-3-5-sonnet'
-            });
+            const config = vscode.workspace.getConfiguration('gamificationDashboard');
+            const provider = config.get<AIProvider>('aiProvider') || 'anthropic';
+            const model = config.get<string>('aiModel') || 'claude-3-5-sonnet-20241022';
 
-            if (models.length === 0) {
-                throw new Error('No Claude model available. Please ensure you have Claude Code extension installed and configured.');
+            switch (provider) {
+                case 'anthropic':
+                    return await this.sendToAnthropic(prompt, model);
+                case 'google':
+                    return await this.sendToGoogle(prompt, model);
+                case 'openai':
+                    return await this.sendToOpenAI(prompt, model);
+                default:
+                    throw new Error(`Unknown AI provider: ${provider}`);
             }
-
-            const model = models[0];
-            const messages = [
-                vscode.LanguageModelChatMessage.User(prompt)
-            ];
-
-            const response = await model.sendRequest(messages, {}, new vscode.CancellationTokenSource().token);
-
-            let fullResponse = '';
-            for await (const chunk of response.text) {
-                fullResponse += chunk;
-            }
-
-            return fullResponse;
         } catch (error) {
-            throw new Error(`Failed to communicate with Claude: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(`Failed to communicate with AI: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+
+    private static async sendToAnthropic(prompt: string, model: string): Promise<string> {
+        const apiKey = vscode.workspace.getConfiguration('gamificationDashboard')
+            .get<string>('anthropicApiKey');
+
+        if (!apiKey || apiKey.trim() === '') {
+            throw new Error('Anthropic API key not configured. Please set it in Settings: Gamification Dashboard > Anthropic Api Key. Get your API key from https://console.anthropic.com/');
+        }
+
+        const anthropic = new Anthropic({ apiKey });
+
+        const response = await anthropic.messages.create({
+            model: model,
+            max_tokens: 8192,
+            messages: [{ role: 'user', content: prompt }]
+        });
+
+        let fullResponse = '';
+        for (const block of response.content) {
+            if (block.type === 'text') {
+                fullResponse += block.text;
+            }
+        }
+
+        return fullResponse;
+    }
+
+    private static async sendToGoogle(prompt: string, model: string): Promise<string> {
+        const apiKey = vscode.workspace.getConfiguration('gamificationDashboard')
+            .get<string>('googleApiKey');
+
+        if (!apiKey || apiKey.trim() === '') {
+            throw new Error('Google API key not configured. Please set it in Settings: Gamification Dashboard > Google Api Key. Get your API key from https://aistudio.google.com/apikey');
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const geminiModel = genAI.getGenerativeModel({ model: model });
+
+        const result = await geminiModel.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+    }
+
+    private static async sendToOpenAI(prompt: string, model: string): Promise<string> {
+        const apiKey = vscode.workspace.getConfiguration('gamificationDashboard')
+            .get<string>('openaiApiKey');
+
+        if (!apiKey || apiKey.trim() === '') {
+            throw new Error('OpenAI API key not configured. Please set it in Settings: Gamification Dashboard > Openai Api Key. Get your API key from https://platform.openai.com/api-keys');
+        }
+
+        const openai = new OpenAI({ apiKey });
+
+        const completion = await openai.chat.completions.create({
+            model: model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 8192
+        });
+
+        return completion.choices[0]?.message?.content || '';
     }
 }

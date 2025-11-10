@@ -17,5 +17,8 @@ Thumbs.db
 *.tmp
 extract-conversation.js
 
+# GenAI uploads folder
+uploads-to-GenAI/
+
 # User-specific VS Code settings (keep settings.local.json)
 .vscode/settings.json
